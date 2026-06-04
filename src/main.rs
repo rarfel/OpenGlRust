@@ -41,13 +41,10 @@ fn main(){
     let mut t:f32 = 0.0;
     // event loop
     #[allow(deprecated)]
-    let _ = event_loop.run(move |event, window_target| {
+    event_loop.run(move |event, window_target| {
         match event {
             glium::winit::event::Event::WindowEvent { event, ..} => match event {
                 glium::winit::event::WindowEvent::CloseRequested => window_target.exit(),
-                glium::winit::event::WindowEvent::Resized(window_size)=>{
-                    display.resize(window_size.into());
-                }
                 glium::winit::event::WindowEvent::RedrawRequested => {
                     t += 0.02;
                     let x_off = t.cos() * 0.5;
@@ -56,9 +53,14 @@ fn main(){
                     // draw function
                     let mut frame = display.draw();
                     frame.clear_color(0.0, 0.4, 1.0, 1.0);
-                    frame.draw(&vertex_buffer, &indices, &program, &uniform! {x: x_off, y: y_off}, &Default::default()).unwrap();
+                    let uniforms = uniform! {x: x_off, y: y_off, t: t};
+                    frame.draw(&vertex_buffer, &indices, &program, &uniforms, &Default::default()).unwrap();
                     frame.finish().unwrap();
                 },
+                glium::winit::event::WindowEvent::Resized(window_size)=>{
+                    display.resize(window_size.into());
+                }
+
             _ => (),
             },
             glium::winit::event::Event::AboutToWait => {
