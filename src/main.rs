@@ -33,14 +33,15 @@ fn main(){
     #[derive(Copy, Clone)]
     struct Vertex {
         position: [f32; 2],
+        color: [f32; 3],
     }
-    implement_vertex!(Vertex, position);
+    implement_vertex!(Vertex, position, color);
 
     // making a triangle manually
     let shape = vec![
-        Vertex{position:[-0.5, -0.5]},
-        Vertex{position:[0.0, 0.5]},
-        Vertex{position:[0.5, -0.25]}
+        Vertex{position:[-0.5, -0.5], color:[1.0, 0.0, 0.0]},
+        Vertex{position:[ 0.0,  0.5], color:[0.0, 1.0, 0.0]},
+        Vertex{position:[ 0.5, -0.5], color:[0.0, 0.0, 1.0]}
     ];
 
     // creating a buffer to store the triangle
@@ -55,8 +56,7 @@ fn main(){
 
     let program = glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None).unwrap();
 
-    // variable to control the animation of the scene
-    let mut t:f32 = 0.0;
+    let mut angle:(f32,f32,f32) = (0.0,0.0,0.0);
     // event loop
     #[allow(deprecated)]
     event_loop.run(move |event, window_target| {
@@ -64,21 +64,17 @@ fn main(){
             glium::winit::event::Event::WindowEvent { event, ..} => match event {
                 glium::winit::event::WindowEvent::CloseRequested => window_target.exit(),
                 glium::winit::event::WindowEvent::RedrawRequested => {
-                    t += 0.02;
-                    let x_off = t.cos() * 0.5;
-                    let y_off = t.sin() * 0.5;
-
                     // draw function
                     let mut frame = display.draw();
-                    frame.clear_color(0.0, 0.4, 1.0, 1.0);
+                    frame.clear_color(0.0, 0.0, 0.0, 1.0);
                     let uniforms = uniform! {
-                        matrix: rotation_matrix(0.0,0.0,0.0),
-                        x: x_off,
-                        y: y_off,
-                        t: t,
+                        matrix: rotation_matrix(angle.0,angle.1,angle.2),
                     };
                     frame.draw(&vertex_buffer, &indices, &program, &uniforms, &Default::default()).unwrap();
                     frame.finish().unwrap();
+                    angle.0 += 0.01;
+                    angle.1 += 0.02;
+                    angle.2 += 0.03;
                 },
                 glium::winit::event::WindowEvent::Resized(window_size)=>{
                     display.resize(window_size.into());
