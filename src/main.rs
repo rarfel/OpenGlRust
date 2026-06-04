@@ -2,6 +2,24 @@
 extern crate glium;
 use glium::Surface;
 
+// rotation matrix on all axis depending on a:yaw, b:pitch and g:roll
+fn rotation_matrix(a:f32, b:f32, g:f32) -> [[f32; 4];4]{
+    let ca = a.cos();
+    let cb = b.cos();
+    let cg = g.cos();
+
+    let sa = a.sin();
+    let sb = b.sin();
+    let sg = g.sin();
+
+    [
+        [(ca*cb), (sa*cb), (-sb), 0.0],
+        [(ca*sb*sg - sa*cg), (sa*sb*sg + ca*cg), (cb*sg), 0.0],
+        [(ca*sb*cg + sa*sg), (sa*sb*cg - ca*sg), (cb*cg), 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ]
+}
+
 fn main(){
     let event_loop = glium::winit::event_loop::EventLoop::builder()
         .build()
@@ -53,7 +71,12 @@ fn main(){
                     // draw function
                     let mut frame = display.draw();
                     frame.clear_color(0.0, 0.4, 1.0, 1.0);
-                    let uniforms = uniform! {x: x_off, y: y_off, t: t};
+                    let uniforms = uniform! {
+                        matrix: rotation_matrix(0.0,0.0,0.0),
+                        x: x_off,
+                        y: y_off,
+                        t: t,
+                    };
                     frame.draw(&vertex_buffer, &indices, &program, &uniforms, &Default::default()).unwrap();
                     frame.finish().unwrap();
                 },
