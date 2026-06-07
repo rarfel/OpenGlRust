@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate glium;
 use glium::Surface;
+mod file_type;
 
 // rotation matrix on all axis depending on a:yaw, b:pitch and g:roll
 fn rotation_matrix(a:f32, b:f32, g:f32) -> [[f32; 4];4]{
@@ -29,10 +30,14 @@ fn main(){
         .with_title("Simple Window")
         .build(&event_loop);
 
-    // Pulling an image and loading it, ensure that the image has binary header equal to 
-    // 89 50 4e 47 0d 0a 1a 0a  00 00 00 0d 49 48 44 52  |.PNG........IHDR|
-    // otherwise it will crash
-    let image = image::load(std::io::Cursor::new(&include_bytes!("../textures/funnySkeleton.png")), image::ImageFormat::Png).unwrap().to_rgba8();
+    //let path: &str = "textures/skeleton-banging-shield.gif";
+    let path: &str = "../textures/funnySkeleton.png";
+    let (file_type, content) = file_type::verify_file_type(path);
+
+    if file_type != "png"{
+        panic!("File type {} not supported right now", file_type);
+    }
+    let image = image::load(std::io::Cursor::new(&content), image::ImageFormat::Png).unwrap().to_rgba8();
     let image_dimensions = image.dimensions();
     let image = glium::texture::RawImage2d::from_raw_rgba_reversed(&image.into_raw(), image_dimensions);
 

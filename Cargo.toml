@@ -5,4 +5,5 @@ edition = "2024"
 
 [dependencies]
 glium = "0.36.0"
-image = "0.24"
+image = "0.25.10"
+mimetype-detector = "0.3.9"
