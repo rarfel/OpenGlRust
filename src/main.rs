@@ -14,10 +14,30 @@ fn rotation_matrix(a:f32, b:f32, g:f32) -> [[f32; 4];4]{
     let sg = g.sin();
 
     [
-        [(ca*cb), (sa*cb), (-sb), 0.0],
+        [(ca*cb),            (sa*cb),            (-sb),   0.0],
         [(ca*sb*sg - sa*cg), (sa*sb*sg + ca*cg), (cb*sg), 0.0],
         [(ca*sb*cg + sa*sg), (sa*sb*cg - ca*sg), (cb*cg), 0.0],
-        [0.0, 0.0, 0.0, 1.0],
+        [0.0,                0.0,                2.0,     1.0],
+    ]
+}
+// projection matrix, to make the gpu know what divide x and y for
+fn projection_matrix((width, height): (u32, u32)) -> [[f32; 4]; 4]{
+    let aspect_ratio = height as f32 / width as f32;
+
+    const PI:f32 = 3.141592;
+    let fov:f32 = 90.0;
+    let f:f32 = 1.0 / (fov * 0.5 / 180.0 * PI ).tan(); // converting to radians
+
+    let zfar:f32 = 1024.0;
+    let znear:f32 = 0.1;
+
+    let q:f32 = zfar / (zfar - znear);
+
+    [
+        [aspect_ratio * f,  0.0,    0.0,    0.0],
+        [0.0,               f,      0.0,    0.0],
+        [0.0,               0.0,    q,      1.0],
+        [0.0,               0.0,-znear * q, 0.0],
     ]
 }
 
@@ -53,6 +73,7 @@ fn main(){
                     frame.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
                     let uniforms = uniform! {
                         matrix: rotation_matrix(angle.0,angle.1,angle.2),
+                        projection: projection_matrix(frame.get_dimensions()),
                         light: [-1.0, 0.4, 0.9f32],
                     };
 
@@ -67,8 +88,8 @@ fn main(){
 
                     frame.draw((&positions, &normals), &indices, &program, &uniforms, &params).unwrap();
                     frame.finish().unwrap();
-                    angle.0 += 0.008;
-                    angle.1 += 0.009;
+                    angle.0 += 0.006;
+                    angle.1 += 0.008;
                     angle.2 += 0.010;
                 },
                 glium::winit::event::WindowEvent::Resized(window_size)=>{
