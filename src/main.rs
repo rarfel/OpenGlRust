@@ -1,7 +1,8 @@
 #[macro_use]
 extern crate glium;
 use glium::Surface;
-mod file_type;
+//mod file_type;
+mod teapot;
 
 // rotation matrix on all axis depending on a:yaw, b:pitch and g:roll
 fn rotation_matrix(a:f32, b:f32, g:f32) -> [[f32; 4];4]{
@@ -30,36 +31,9 @@ fn main(){
         .with_title("Simple Window")
         .build(&event_loop);
 
-    // types supported are the ones that have a '.to_rgba8()' method
-    let image = file_type::load_image("../textures/funnySkeleton.jpg").unwrap().to_rgba8();
-    let image_dimensions = image.dimensions();
-    let image = glium::texture::RawImage2d::from_raw_rgba_reversed(&image.into_raw(), image_dimensions);
-    let texture = glium::Texture2d::new(&display, image).unwrap();
-
-    // Defining a struct to hold a vertex
-    #[derive(Copy, Clone)]
-    struct Vertex {
-        position: [f32; 2],
-        tex_coords: [f32; 2],
-    }
-    implement_vertex!(Vertex, position, tex_coords);
-
-    // making a triangle manually
-    let shape = vec![
-        Vertex{position:[-0.8, -0.5], tex_coords:[0.0, 0.0]},
-        Vertex{position:[ 0.8, -0.5], tex_coords:[1.0, 0.0]},
-        Vertex{position:[ 0.8,  0.5], tex_coords:[1.0, 1.0]},
-
-        Vertex{position:[ 0.8,  0.5], tex_coords:[1.0, 1.0]},
-        Vertex{position:[-0.8,  0.5], tex_coords:[0.0, 1.0]},
-        Vertex{position:[-0.8, -0.5], tex_coords:[0.0, 0.0]}
-    ];
-
-    // creating a buffer to store the triangle
-    let vertex_buffer = glium::VertexBuffer::new(&display, &shape).unwrap();
-    let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
-
-    // shader to render the triangle
+    let positions = glium::VertexBuffer::new(&display, &teapot::VERTICES).unwrap();
+    let normals = glium::VertexBuffer::new(&display, &teapot::NORMALS).unwrap();
+    let indices = glium::IndexBuffer::new(&display, glium::index::PrimitiveType::TrianglesList, &teapot::INDICES).unwrap();
 
     let vertex_shader_src: &'static str = include_str!("../shaders/vertex.glsl");
 
@@ -80,9 +54,8 @@ fn main(){
                     frame.clear_color(0.0, 0.0, 0.0, 1.0);
                     let uniforms = uniform! {
                         matrix: rotation_matrix(angle.0,angle.1,angle.2),
-                        tex: &texture,
                     };
-                    frame.draw(&vertex_buffer, &indices, &program, &uniforms, &Default::default()).unwrap();
+                    frame.draw((&positions, &normals), &indices, &program, &uniforms, &Default::default()).unwrap();
                     frame.finish().unwrap();
                     angle.0 += 0.008;
                     angle.1 += 0.009;
