@@ -30,20 +30,12 @@ fn main(){
         .with_title("Simple Window")
         .build(&event_loop);
 
-    let (file_type, content) = file_type::verify_file_type("textures/funnySkeleton.jpg");
-
     // types supported are the ones that have a '.to_rgba8()' method
-    let image = match file_type {
-        "png"=>image::load(std::io::Cursor::new(&content), image::ImageFormat::Png).unwrap().to_rgba8(),
-        "jpeg"=>image::load(std::io::Cursor::new(&content), image::ImageFormat::Jpeg).unwrap().to_rgba8(),
-        "gif"=>image::load(std::io::Cursor::new(&content), image::ImageFormat::Gif).unwrap().to_rgba8(),
-        "avif"=> panic!("File type \"{}\" not supported right now", file_type),
-        &_ => panic!("File type \"{}\" not supported right now", file_type),
-    };
-
+    let image = file_type::load_image("../textures/funnySkeleton.jpg").unwrap().to_rgba8();
     let image_dimensions = image.dimensions();
     let image = glium::texture::RawImage2d::from_raw_rgba_reversed(&image.into_raw(), image_dimensions);
     let texture = glium::Texture2d::new(&display, image).unwrap();
+
     // Defining a struct to hold a vertex
     #[derive(Copy, Clone)]
     struct Vertex {
