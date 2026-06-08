@@ -54,12 +54,13 @@ fn main(){
                     frame.clear_color(0.0, 0.0, 0.0, 1.0);
                     let uniforms = uniform! {
                         matrix: rotation_matrix(angle.0,angle.1,angle.2),
+                        light: [-1.0, 0.4, 0.9f32],
                     };
                     frame.draw((&positions, &normals), &indices, &program, &uniforms, &Default::default()).unwrap();
                     frame.finish().unwrap();
-                    angle.0 += 0.008;
-                    angle.1 += 0.009;
-                    angle.2 += 0.010;
+                    angle.0 += 0.000;
+                    angle.1 += 0.000;
+                    angle.2 += 0.000;
                 },
                 glium::winit::event::WindowEvent::Resized(window_size)=>{
                     display.resize(window_size.into());
