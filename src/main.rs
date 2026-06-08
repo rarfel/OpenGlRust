@@ -1,7 +1,6 @@
 #[macro_use]
 extern crate glium;
 use glium::Surface;
-//mod file_type;
 mod teapot;
 
 // rotation matrix on all axis depending on a:yaw, b:pitch and g:roll
@@ -51,16 +50,26 @@ fn main(){
                 glium::winit::event::WindowEvent::RedrawRequested => {
                     // draw function
                     let mut frame = display.draw();
-                    frame.clear_color(0.0, 0.0, 0.0, 1.0);
+                    frame.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
                     let uniforms = uniform! {
                         matrix: rotation_matrix(angle.0,angle.1,angle.2),
                         light: [-1.0, 0.4, 0.9f32],
                     };
-                    frame.draw((&positions, &normals), &indices, &program, &uniforms, &Default::default()).unwrap();
+
+                    let params = glium::DrawParameters {
+                        depth: glium::Depth {
+                            test: glium::draw_parameters::DepthTest::IfLess,
+                            write: true,
+                            .. Default::default()
+                        },
+                        .. Default::default()
+                    };
+
+                    frame.draw((&positions, &normals), &indices, &program, &uniforms, &params).unwrap();
                     frame.finish().unwrap();
-                    angle.0 += 0.000;
-                    angle.1 += 0.000;
-                    angle.2 += 0.000;
+                    angle.0 += 0.008;
+                    angle.1 += 0.009;
+                    angle.2 += 0.010;
                 },
                 glium::winit::event::WindowEvent::Resized(window_size)=>{
                     display.resize(window_size.into());
