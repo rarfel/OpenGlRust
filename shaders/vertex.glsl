@@ -12,7 +12,7 @@ uniform mat4 view;
 uniform mat4 rotation;
 
 void main() {
-  float scaler = 0.01;
+  float scaler = 1.00;
   mat4 viewmatrix = (view) * (matrix * rotation);
   v_normal = transpose(inverse(mat3(viewmatrix))) * normal;
   gl_Position = projection * viewmatrix * vec4(position * scaler, 1.0);

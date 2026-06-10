@@ -6,7 +6,7 @@ Objectives I set to do in this project
 - prepare OpenGl wrapper
 - create a window
 - make a triangle  
-- shaders
+- basic shaders
 - rotate triangle
 - textures
 - 3d models and rotations  
@@ -17,3 +17,4 @@ Simply followed the <a href="https://github.com/glium/glium/blob/master/book/tut
 - create a .obj file reader
 - make .obj appear in screen
 - make camera movements
+- better shaders
