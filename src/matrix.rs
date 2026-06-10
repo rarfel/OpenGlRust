@@ -7,6 +7,7 @@ pub fn model_matrix() -> [[f32; 4];4]{
         [0.0, 0.0, 2.0, 1.0]
     ]
 }
+
 // view matrix, where and what the camera can see
 pub fn view_matrix(position: &[f32; 3], direction: &[f32; 3], up: &[f32; 3]) -> [[f32; 4];4]{
     let f = {
@@ -41,6 +42,7 @@ pub fn view_matrix(position: &[f32; 3], direction: &[f32; 3], up: &[f32; 3]) -> 
         [p[0],      p[1], p[2], 1.0],
     ]
 }
+
 // rotation matrix on all axis depending on a:yaw, b:pitch and g:roll
 pub fn rotation_matrix((a,b,g):(f32, f32, f32)) -> [[f32; 4];4]{
     let ca = a.cos();
@@ -58,16 +60,17 @@ pub fn rotation_matrix((a,b,g):(f32, f32, f32)) -> [[f32; 4];4]{
         [0.0,                0.0,                1.0,     1.0],
     ]
 }
+
 // projection matrix, to make the gpu know what divide x and y for
 pub fn projection_matrix((width, height): (u32, u32)) -> [[f32; 4]; 4]{
     let aspect_ratio = height as f32 / width as f32;
 
     const PI:f32 = 3.141592;
-    let fov:f32 = 90.0;
+    let fov:f32 = 90.0; // degrees
     let f:f32 = 1.0 / (fov * 0.5 / 180.0 * PI ).tan(); // converting to radians
 
-    let zfar:f32 = 1024.0;
-    let znear:f32 = 0.1;
+    let zfar:f32 = 1024.0; // how far the screen goes
+    let znear:f32 = 0.1; // how close the screen is
 
     let q:f32 = zfar / (zfar - znear);
 
