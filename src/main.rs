@@ -1,25 +1,8 @@
 #[macro_use]
 extern crate glium;
 use glium::Surface;
-mod file_type;
-
-// rotation matrix on all axis depending on a:yaw, b:pitch and g:roll
-fn rotation_matrix(a:f32, b:f32, g:f32) -> [[f32; 4];4]{
-    let ca = a.cos();
-    let cb = b.cos();
-    let cg = g.cos();
-
-    let sa = a.sin();
-    let sb = b.sin();
-    let sg = g.sin();
-
-    [
-        [(ca*cb), (sa*cb), (-sb), 0.0],
-        [(ca*sb*sg - sa*cg), (sa*sb*sg + ca*cg), (cb*sg), 0.0],
-        [(ca*sb*cg + sa*sg), (sa*sb*cg - ca*sg), (cb*cg), 0.0],
-        [0.0, 0.0, 0.0, 1.0],
-    ]
-}
+//mod teapot;
+mod matrix;
 
 fn main(){
     let event_loop = glium::winit::event_loop::EventLoop::builder()
@@ -30,36 +13,27 @@ fn main(){
         .with_title("Simple Window")
         .build(&event_loop);
 
-    // types supported are the ones that have a '.to_rgba8()' method
-    let image = file_type::load_image("../textures/funnySkeleton.jpg").unwrap().to_rgba8();
-    let image_dimensions = image.dimensions();
-    let image = glium::texture::RawImage2d::from_raw_rgba_reversed(&image.into_raw(), image_dimensions);
-    let texture = glium::Texture2d::new(&display, image).unwrap();
-
     // Defining a struct to hold a vertex
     #[derive(Copy, Clone)]
     struct Vertex {
-        position: [f32; 2],
-        tex_coords: [f32; 2],
+        position: [f32; 3],
+        normal: [f32; 3],
+        //tex_coords: [f32; 2],
     }
-    implement_vertex!(Vertex, position, tex_coords);
+    implement_vertex!(Vertex, position, normal); //tex_coords);
 
-    // making a triangle manually
-    let shape = vec![
-        Vertex{position:[-0.8, -0.5], tex_coords:[0.0, 0.0]},
-        Vertex{position:[ 0.8, -0.5], tex_coords:[1.0, 0.0]},
-        Vertex{position:[ 0.8,  0.5], tex_coords:[1.0, 1.0]},
+    let shape = glium::vertex::VertexBuffer::new(&display, &[
+        Vertex{position:[-1.0,  1.0, 0.0], normal:[0.0, 0.0,-1.0]}, //tex_coords:[0.0, 0.0]},
+        Vertex{position:[ 1.0,  1.0, 0.0], normal:[0.0, 0.0,-1.0]}, //tex_coords:[1.0, 0.0]},
+        Vertex{position:[-1.0, -1.0, 0.0], normal:[0.0, 0.0,-1.0]}, //tex_coords:[1.0, 1.0]},
+        Vertex{position:[ 1.0, -1.0, 0.0], normal:[0.0, 0.0,-1.0]}, //tex_coords:[0.0, 1.0]},
+    ]).unwrap();
 
-        Vertex{position:[ 0.8,  0.5], tex_coords:[1.0, 1.0]},
-        Vertex{position:[-0.8,  0.5], tex_coords:[0.0, 1.0]},
-        Vertex{position:[-0.8, -0.5], tex_coords:[0.0, 0.0]}
-    ];
+    let indices = glium::index::NoIndices(glium::index::PrimitiveType::TriangleStrip);
 
-    // creating a buffer to store the triangle
-    let vertex_buffer = glium::VertexBuffer::new(&display, &shape).unwrap();
-    let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
-
-    // shader to render the triangle
+    //let positions = glium::VertexBuffer::new(&display, &teapot::VERTICES).unwrap();
+    //let normals = glium::VertexBuffer::new(&display, &teapot::NORMALS).unwrap();
+    //let indices = glium::IndexBuffer::new(&display, glium::index::PrimitiveType::TrianglesList, &teapot::INDICES).unwrap();
 
     let vertex_shader_src: &'static str = include_str!("../shaders/vertex.glsl");
 
@@ -77,16 +51,30 @@ fn main(){
                 glium::winit::event::WindowEvent::RedrawRequested => {
                     // draw function
                     let mut frame = display.draw();
-                    frame.clear_color(0.0, 0.0, 0.0, 1.0);
+                    frame.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
                     let uniforms = uniform! {
-                        matrix: rotation_matrix(angle.0,angle.1,angle.2),
-                        tex: &texture,
+                        matrix: matrix::model_matrix(),
+                        view: matrix::view_matrix(&[0.0, 0.0, 1.0], &[0.0, 0.0, 1.0], &[0.0, 1.0, 0.0]),
+                        rotation: matrix::rotation_matrix(angle),
+                        projection: matrix::projection_matrix(frame.get_dimensions()),
                     };
-                    frame.draw(&vertex_buffer, &indices, &program, &uniforms, &Default::default()).unwrap();
+
+                    let params = glium::DrawParameters {
+                        depth: glium::Depth {
+                            test: glium::draw_parameters::DepthTest::IfLess,
+                            write: true,
+                            .. Default::default()
+                        },
+                        backface_culling: glium::draw_parameters::BackfaceCullingMode::CullCounterClockwise,
+                        .. Default::default()
+                    };
+
+                    //frame.draw(&vertex_buffer, &indices, &program, &uniforms, &params).unwrap();
+                    frame.draw(&shape, &indices, &program, &uniforms, &params).unwrap();
                     frame.finish().unwrap();
-                    angle.0 += 0.008;
-                    angle.1 += 0.009;
-                    angle.2 += 0.010;
+                    angle.0 += 0.00;
+                    angle.1 += 0.02;
+                    angle.2 += 0.01;
                 },
                 glium::winit::event::WindowEvent::Resized(window_size)=>{
                     display.resize(window_size.into());

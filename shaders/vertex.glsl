@@ -1,12 +1,20 @@
-#version 140
+#version 150
 
-in vec2 position;
-in vec2 tex_coords;
-out vec2 v_tex_coords;
+in vec3 position;
+in vec3 normal;
 
+out vec3 v_normal;
+out vec3 v_position;
+
+uniform mat4 projection;
 uniform mat4 matrix;
+uniform mat4 view;
+uniform mat4 rotation;
 
 void main() {
-    v_tex_coords = tex_coords;
-    gl_Position = matrix * vec4(position, 0.0, 1.0);
+  float scaler = 1.00;
+  mat4 viewmatrix = (view) * (matrix * rotation);
+  v_normal = transpose(inverse(mat3(viewmatrix))) * normal;
+  gl_Position = projection * viewmatrix * vec4(position * scaler, 1.0);
+  v_position = gl_Position.xyz / gl_Position.w;
 }
