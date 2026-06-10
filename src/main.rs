@@ -3,8 +3,53 @@ extern crate glium;
 use glium::Surface;
 mod teapot;
 
+// base matrix
+fn model_matrix() -> [[f32; 4];4]{
+    [
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.0, 0.0, 2.0, 1.0]
+    ]
+}
+
+// view matrix, where and what the camera can see
+fn view_matrix(position: &[f32; 3], direction: &[f32; 3], up: &[f32; 3]) -> [[f32; 4];4]{
+    let f = {
+        let f = direction;
+        let len = f[0] * f[0] + f[1] * f[1] + f[2] * f[2];
+        let len = len.sqrt();
+        [f[0] / len, f[1] / len, f[2] / len]
+    };
+
+    let s = [up[1] * f[2] - up[2] * f[1],
+             up[2] * f[0] - up[0] * f[2],
+             up[0] * f[1] - up[1] * f[0]];
+
+    let s_norm = {
+        let len = s[0] * s[0] + s[1] * s[1] + s[2] * s[2];
+        let len = len.sqrt();
+        [s[0] / len, s[1] / len, s[2] / len]
+    };
+
+    let u = [f[1] * s_norm[2] - f[2] * s_norm[1],
+             f[2] * s_norm[0] - f[0] * s_norm[2],
+             f[0] * s_norm[1] - f[1] * s_norm[0]];
+
+    let p = [-position[0] * s_norm[0] - position[1] * s_norm[1] - position[2] * s_norm[2],
+             -position[0] * u[0] - position[1] * u[1] - position[2] * u[2],
+             -position[0] * f[0] - position[1] * f[1] - position[2] * f[2]];
+
+    [
+        [s_norm[0], u[0], f[0], 0.0],
+        [s_norm[1], u[1], f[1], 0.0],
+        [s_norm[2], u[2], f[2], 0.0],
+        [p[0], p[1], p[2], 1.0],
+    ]
+}
+
 // rotation matrix on all axis depending on a:yaw, b:pitch and g:roll
-fn rotation_matrix(a:f32, b:f32, g:f32) -> [[f32; 4];4]{
+fn rotation_matrix((a,b,g):(f32, f32, f32)) -> [[f32; 4];4]{
     let ca = a.cos();
     let cb = b.cos();
     let cg = g.cos();
@@ -17,7 +62,7 @@ fn rotation_matrix(a:f32, b:f32, g:f32) -> [[f32; 4];4]{
         [(ca*cb),            (sa*cb),            (-sb),   0.0],
         [(ca*sb*sg - sa*cg), (sa*sb*sg + ca*cg), (cb*sg), 0.0],
         [(ca*sb*cg + sa*sg), (sa*sb*cg - ca*sg), (cb*cg), 0.0],
-        [0.0,                0.0,                2.0,     1.0],
+        [0.0,                0.0,                1.0,     1.0],
     ]
 }
 // projection matrix, to make the gpu know what divide x and y for
@@ -72,9 +117,10 @@ fn main(){
                     let mut frame = display.draw();
                     frame.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
                     let uniforms = uniform! {
-                        matrix: rotation_matrix(angle.0,angle.1,angle.2),
+                        matrix: model_matrix(),
+                        view: view_matrix(&[2.0, 1.0, 1.0], &[-2.0,-1.0, 1.0], &[0.0, 1.0, 0.0]),
+                        rotation: rotation_matrix(angle),
                         projection: projection_matrix(frame.get_dimensions()),
-                        light: [-1.0, 0.4, 0.9f32],
                     };
 
                     let params = glium::DrawParameters {
@@ -89,9 +135,9 @@ fn main(){
 
                     frame.draw((&positions, &normals), &indices, &program, &uniforms, &params).unwrap();
                     frame.finish().unwrap();
-                    angle.0 += 0.006;
-                    angle.1 += 0.008;
-                    angle.2 += 0.010;
+                    angle.0 += 0.00;
+                    angle.1 += 0.01;
+                    angle.2 += 0.00;
                 },
                 glium::winit::event::WindowEvent::Resized(window_size)=>{
                     display.resize(window_size.into());

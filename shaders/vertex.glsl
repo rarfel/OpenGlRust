@@ -4,12 +4,17 @@ in vec3 position;
 in vec3 normal;
 
 out vec3 v_normal;
+out vec3 v_position;
 
 uniform mat4 projection;
 uniform mat4 matrix;
+uniform mat4 view;
+uniform mat4 rotation;
 
 void main() {
   float scaler = 0.01;
-  v_normal = transpose(inverse(mat3(matrix))) * normal;
-  gl_Position = matrix * projection * vec4(position * scaler, 1.0);
+  mat4 viewmatrix = (view) * (matrix * rotation);
+  v_normal = transpose(inverse(mat3(viewmatrix))) * normal;
+  gl_Position = projection * viewmatrix * vec4(position * scaler, 1.0);
+  v_position = gl_Position.xyz / gl_Position.w;
 }
