@@ -1,8 +1,8 @@
 #[macro_use]
 extern crate glium;
 use glium::Surface;
-//mod teapot;
 mod matrix;
+mod file_type;
 
 fn main(){
     let event_loop = glium::winit::event_loop::EventLoop::builder()
@@ -18,22 +18,29 @@ fn main(){
     struct Vertex {
         position: [f32; 3],
         normal: [f32; 3],
-        //tex_coords: [f32; 2],
+        tex_coords: [f32; 2],
     }
-    implement_vertex!(Vertex, position, normal); //tex_coords);
+    implement_vertex!(Vertex, position, normal, tex_coords);
 
     let shape = glium::vertex::VertexBuffer::new(&display, &[
-        Vertex{position:[-1.0,  1.0, 0.0], normal:[0.0, 0.0,-1.0]}, //tex_coords:[0.0, 0.0]},
-        Vertex{position:[ 1.0,  1.0, 0.0], normal:[0.0, 0.0,-1.0]}, //tex_coords:[1.0, 0.0]},
-        Vertex{position:[-1.0, -1.0, 0.0], normal:[0.0, 0.0,-1.0]}, //tex_coords:[1.0, 1.0]},
-        Vertex{position:[ 1.0, -1.0, 0.0], normal:[0.0, 0.0,-1.0]}, //tex_coords:[0.0, 1.0]},
+        Vertex{position:[ 1.0, -1.0, 0.0], normal:[0.0, 0.0,-1.0], tex_coords:[1.0, 0.0]},
+        Vertex{position:[ 1.0,  1.0, 0.0], normal:[0.0, 0.0,-1.0], tex_coords:[1.0, 1.0]},
+        Vertex{position:[-1.0, -1.0, 0.0], normal:[0.0, 0.0,-1.0], tex_coords:[0.0, 0.0]},
+        Vertex{position:[-1.0,  1.0, 0.0], normal:[0.0, 0.0,-1.0], tex_coords:[0.0, 1.0]},
+
     ]).unwrap();
 
     let indices = glium::index::NoIndices(glium::index::PrimitiveType::TriangleStrip);
 
-    //let positions = glium::VertexBuffer::new(&display, &teapot::VERTICES).unwrap();
-    //let normals = glium::VertexBuffer::new(&display, &teapot::NORMALS).unwrap();
-    //let indices = glium::IndexBuffer::new(&display, glium::index::PrimitiveType::TrianglesList, &teapot::INDICES).unwrap();
+    let image = file_type::load_image("../textures/wall.jpg").unwrap().to_rgba8();
+    let image_dimensions = image.dimensions();
+    let image = glium::texture::RawImage2d::from_raw_rgba_reversed(&image.into_raw(), image_dimensions);
+    let diffuse_texture = glium::texture::Texture2d::new(&display, image).unwrap();
+
+    let image = file_type::load_image("../textures/wall-normal.png").unwrap().to_rgba8();
+    let image_dimensions = image.dimensions();
+    let image = glium::texture::RawImage2d::from_raw_rgba_reversed(&image.into_raw(), image_dimensions);
+    let normal_tex = glium::texture::Texture2d::new(&display, image).unwrap();
 
     let vertex_shader_src: &'static str = include_str!("../shaders/vertex.glsl");
 
@@ -54,9 +61,11 @@ fn main(){
                     frame.clear_color_and_depth((0.0, 0.0, 0.0, 1.0), 1.0);
                     let uniforms = uniform! {
                         matrix: matrix::model_matrix(),
-                        view: matrix::view_matrix(&[0.0, 0.0, 1.0], &[0.0, 0.0, 1.0], &[0.0, 1.0, 0.0]),
+                        view: matrix::view_matrix(&[0.0, 0.0,-1.0], &[ 0.0, 0.0, 1.0], &[0.0, 1.0, 0.0]),
                         rotation: matrix::rotation_matrix(angle),
                         projection: matrix::projection_matrix(frame.get_dimensions()),
+                        tex: &diffuse_texture,
+                        normal_tex: &normal_tex,
                     };
 
                     let params = glium::DrawParameters {
@@ -65,16 +74,15 @@ fn main(){
                             write: true,
                             .. Default::default()
                         },
-                        backface_culling: glium::draw_parameters::BackfaceCullingMode::CullCounterClockwise,
+                        //backface_culling: glium::draw_parameters::BackfaceCullingMode::CullClockwise,
                         .. Default::default()
                     };
 
-                    //frame.draw(&vertex_buffer, &indices, &program, &uniforms, &params).unwrap();
                     frame.draw(&shape, &indices, &program, &uniforms, &params).unwrap();
                     frame.finish().unwrap();
-                    angle.0 += 0.00;
-                    angle.1 += 0.02;
-                    angle.2 += 0.01;
+                    angle.0 += 0.000;
+                    angle.1 += 0.005;
+                    angle.2 += 0.000;
                 },
                 glium::winit::event::WindowEvent::Resized(window_size)=>{
                     display.resize(window_size.into());
