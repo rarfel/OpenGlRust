@@ -54,10 +54,10 @@ pub fn rotation_matrix((a,b,g):(f32, f32, f32)) -> [[f32; 4];4]{
     let sg = g.sin();
 
     [
-        [(ca*cb),            (sa*cb),            (-sb),   0.0],
-        [(ca*sb*sg - sa*cg), (sa*sb*sg + ca*cg), (cb*sg), 0.0],
-        [(ca*sb*cg + sa*sg), (sa*sb*cg - ca*sg), (cb*cg), 0.0],
-        [0.0,                0.0,                1.0,     1.0],
+        [(ca*cb), (ca*sb*sg - sa*cg), (ca*sb*cg + sa*sg), 0.0],
+        [(sa*cb), (sa*sb*sg + ca*cg), (sa*sb*cg - ca*sg), 0.0],
+        [(-sb),              (cb*sg),            (cb*cg), 0.0],
+        [0.0,                    0.0,                1.0, 1.0],
     ]
 }
 
