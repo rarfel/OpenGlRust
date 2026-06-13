@@ -2,7 +2,6 @@
 extern crate glium;
 use glium::Surface;
 mod matrix;
-mod file_type;
 
 fn main(){
     let event_loop = glium::winit::event_loop::EventLoop::builder()
@@ -18,29 +17,41 @@ fn main(){
     struct Vertex {
         position: [f32; 3],
         normal: [f32; 3],
-        tex_coords: [f32; 2],
     }
-    implement_vertex!(Vertex, position, normal, tex_coords);
+    implement_vertex!(Vertex, position, normal);
 
-    let shape = glium::vertex::VertexBuffer::new(&display, &[
-        Vertex{position:[ 1.0, -1.0, 0.0], normal:[0.0, 0.0,-1.0], tex_coords:[1.0, 0.0]},
-        Vertex{position:[ 1.0,  1.0, 0.0], normal:[0.0, 0.0,-1.0], tex_coords:[1.0, 1.0]},
-        Vertex{position:[-1.0, -1.0, 0.0], normal:[0.0, 0.0,-1.0], tex_coords:[0.0, 0.0]},
-        Vertex{position:[-1.0,  1.0, 0.0], normal:[0.0, 0.0,-1.0], tex_coords:[0.0, 1.0]},
+    let shape = glium::VertexBuffer::new(&display, &[
+        Vertex{position:[ 1.0,  1.0, -1.0], normal:[ 1.0, 1.0,-1.0]},
+        Vertex{position:[ 1.0, -1.0, -1.0], normal:[ 1.0,-1.0,-1.0]},
+        Vertex{position:[ 1.0,  1.0,  1.0], normal:[ 1.0, 1.0, 1.0]},
+        Vertex{position:[ 1.0, -1.0,  1.0], normal:[ 1.0,-1.0, 1.0]},
+        Vertex{position:[-1.0,  1.0, -1.0], normal:[-1.0, 1.0,-1.0]},
+        Vertex{position:[-1.0, -1.0, -1.0], normal:[-1.0,-1.0,-1.0]},
+        Vertex{position:[-1.0,  1.0,  1.0], normal:[-1.0, 1.0, 1.0]},
+        Vertex{position:[-1.0, -1.0,  1.0], normal:[-1.0,-1.0, 1.0]},
 
     ]).unwrap();
 
-    let indices = glium::index::NoIndices(glium::index::PrimitiveType::TriangleStrip);
+    let index:[u8; 36] = [
+        0, 4, 6,
+        0, 6, 2,
 
-    let image = file_type::load_image("../textures/wall.jpg").unwrap().to_rgba8();
-    let image_dimensions = image.dimensions();
-    let image = glium::texture::RawImage2d::from_raw_rgba_reversed(&image.into_raw(), image_dimensions);
-    let diffuse_texture = glium::texture::Texture2d::new(&display, image).unwrap();
+        3, 2, 6,
+        3, 6, 7,
 
-    let image = file_type::load_image("../textures/wall-normal.png").unwrap().to_rgba8();
-    let image_dimensions = image.dimensions();
-    let image = glium::texture::RawImage2d::from_raw_rgba_reversed(&image.into_raw(), image_dimensions);
-    let normal_tex = glium::texture::Texture2d::new(&display, image).unwrap();
+        7, 6, 4,
+        7, 4, 5,
+
+        5, 1, 3,
+        5, 3, 7,
+
+        1, 0, 2,
+        1, 2, 3,
+
+        5, 4, 0,
+        5, 0, 1,
+    ];
+    let indices = glium::IndexBuffer::new(&display, glium::index::PrimitiveType::TrianglesList, &index).unwrap();
 
     let vertex_shader_src: &'static str = include_str!("../shaders/vertex.glsl");
 
@@ -64,8 +75,6 @@ fn main(){
                         view: matrix::view_matrix(&[0.0, 0.0,-1.0], &[ 0.0, 0.0, 1.0], &[0.0, 1.0, 0.0]),
                         rotation: matrix::rotation_matrix(angle),
                         projection: matrix::projection_matrix(frame.get_dimensions()),
-                        tex: &diffuse_texture,
-                        normal_tex: &normal_tex,
                     };
 
                     let params = glium::DrawParameters {
@@ -74,13 +83,13 @@ fn main(){
                             write: true,
                             .. Default::default()
                         },
-                        //backface_culling: glium::draw_parameters::BackfaceCullingMode::CullClockwise,
+                        backface_culling: glium::draw_parameters::BackfaceCullingMode::CullCounterClockwise,
                         .. Default::default()
                     };
 
                     frame.draw(&shape, &indices, &program, &uniforms, &params).unwrap();
                     frame.finish().unwrap();
-                    angle.0 += 0.000;
+                    angle.0 += 0.003;
                     angle.1 += 0.005;
                     angle.2 += 0.000;
                 },

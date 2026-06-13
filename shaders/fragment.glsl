@@ -1,16 +1,16 @@
-#version 150
+#version 430
 
 in vec3 v_normal;
 in vec3 v_position;
-in vec2 v_tex_coords;
+//in vec2 v_tex_coords;
 
 out vec4 color;
-vec3 light = vec3(-0.5, 1.0, -3.7);
+vec3 light = vec3(-0.4, 0.6, -1.0);
 
 uniform sampler2D tex;
 uniform sampler2D normal_tex;
 
-vec3 specular_color = vec3(0.7, 0.7, 0.7); // the light reflected in the screen
+vec3 specular_color = vec3(0.4, 0.5, 0.8); // the light reflected in the screen
 
 mat3 cotangent_frame(vec3 normal, vec3 pos, vec2 uv) {
     vec3 dp1 = dFdx(pos);
@@ -28,13 +28,15 @@ mat3 cotangent_frame(vec3 normal, vec3 pos, vec2 uv) {
 }
 
 void main(){
-  vec3 diffuse_color = texture(tex, v_tex_coords).rgb; // the light the object emits
-  vec3 ambient_color = diffuse_color * 0.1; // the light the object receives
+  //vec3 diffuse_color = texture(tex, v_tex_coords).rgb; // the light the object emits
+  //vec3 ambient_color = diffuse_color * 0.1; // the light the object receives
+  vec3 diffuse_color = vec3(0.5, 0.5, 0.5);
+  vec3 ambient_color = vec3(0.4, 0.4, 0.4);
 
   vec3 normal_unit = normalize(v_normal);
-  vec3 normal_map = texture(normal_tex, v_tex_coords).rgb;
-  mat3 tbn = cotangent_frame(normal_unit,  v_position, v_tex_coords);
-  vec3 real_normal = normalize(tbn * -(normal_map * 2.0 - 1.0));
+  //vec3 normal_map = texture(normal_tex, v_tex_coords).rgb;
+  //mat3 tbn = cotangent_frame(normal_unit,  v_position, v_tex_coords);
+  //vec3 real_normal = normalize(tbn * -(normal_map * 2.0 - 1.0));
 
   float diffuse = max(dot(normal_unit , normalize(light)), 0.0);
   
